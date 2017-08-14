@@ -64,6 +64,9 @@ if __name__ == '__main__':
     cli = HamrCLI()
     cli.opening()
     while cli.do_next_iter:
-        option = cli.show_options()
-        cli.handle_decision(str(option))
+        try:
+            option = cli.show_options()
+            cli.handle_decision(str(option))
+        except:
+            cli.messenger.isTimeout = 1
 
