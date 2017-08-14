@@ -2,7 +2,7 @@
 import socket
 import struct
 
-class HamrMessenger(object):
+class HamrMessenger():
     """An interface that allows for motor commands to be sent to the HAMR.
 
     If the source code on the HAMR was not changed, custom params for initialization should not be
@@ -21,10 +21,14 @@ class HamrMessenger(object):
         """Inits the HamrMessenger"""
         self.address=(server_ip, server_port)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
         self.message_types = {
             'holo_drive': (103, 'fff'),
             'dif_drive': (104, 'fff')
         }
+            
+        self.sock.settimeout(1)
+
 
     def send_holonomic_command(self, x=0, y=0, r=0):
         """Sends a command to the HAMR to move in a holonomic fashion.
@@ -36,7 +40,7 @@ class HamrMessenger(object):
         """
         vector = [float(x), float(y), float(r)]
         msg = self._message_generator('holo_drive', vector)
-        self._send_message(msg)
+        print(self._send_message(msg))
 
     def send_dif_drive_command(self, right=0, left=0, r=0):
         """Sends a command to the HAMR to move in its dif drive mode.
@@ -47,11 +51,11 @@ class HamrMessenger(object):
             r: Float that represents the desired velocity of the turret motor (deg/s).
         """
         vector = [float(right) * -1.0, float(left), float(r)]
-        self._send_message(self._message_generator('dif_drive', vector))
+        print(self._send_message(self._message_generator('dif_drive', vector)))
 
     def kill_motors(self):
         """Method that sets all desired velocities to 0."""
-        self.send_dif_drive_command(0.0, 0.0, 0.0)
+        print(self.send_dif_drive_command(0.0, 0.0, 0.0))
 
     def _message_generator(self, message_type, data=[]):
         """Returns a message of the specified type containing the data given."""
@@ -60,9 +64,16 @@ class HamrMessenger(object):
         msg = chr(msg_type)
         if (len(data) != len(msg_format)):
             raise ValueError('You provided insufficient data for this kind of message')
-        msg += struct.pack('<' + msg_format, *data)
+        msg += str(struct.pack('<' + msg_format, *data))
         return msg
 
     def _send_message(self, message):
         for _ in range(0, 2):
             self.sock.sendto(message, self.address)
+        return self._receive_message()
+
+
+    def _receive_message(self):
+        rec_data, addr = self.sock.recvfrom(1024)
+        return rec_data
+    
