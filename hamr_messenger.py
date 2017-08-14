@@ -27,8 +27,8 @@ class HamrMessenger():
             'dif_drive': (104, 'fff')
         }
             
-        self.sock.settimeout(1)
-
+        self.sock.settimeout(0.1)
+        self.isTimeout = 0
 
     def send_holonomic_command(self, x=0, y=0, r=0):
         """Sends a command to the HAMR to move in a holonomic fashion.
@@ -74,6 +74,9 @@ class HamrMessenger():
 
 
     def _receive_message(self):
-        rec_data, addr = self.sock.recvfrom(1024)
-        return rec_data
+        if(self.isTimeout == 0):
+            rec_data, addr = self.sock.recvfrom(1024)
+            return rec_data
+        else:
+            return 0
     
